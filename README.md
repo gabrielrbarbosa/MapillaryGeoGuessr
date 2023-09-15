@@ -10,3 +10,6 @@ TODO: Multiplayer Free Parties (?)
 - Create new [Mapillary Account](https://www.mapillary.com/dashboard/developers)
 - Create new Mapillary App and replace .env variables
 - Run composer install
+
+## License
+[MIT](LICENSE)
