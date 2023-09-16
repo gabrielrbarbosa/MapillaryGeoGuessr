@@ -1,7 +1,7 @@
 <?php
 require_once '../vendor/autoload.php';
 
-function getRandomPlaces($numberOfPlaces = 5, $lastDays = 30)
+function getRandomPlaces($accessToken, $numberOfPlaces = 5, $lastDays = 30)
 {
     try {
         $client = new GuzzleHttp\Client();
@@ -11,7 +11,7 @@ function getRandomPlaces($numberOfPlaces = 5, $lastDays = 30)
         $url = "https://graph.mapillary.com/images?fields=id,geometry,camera_type,captured_at"
             . "&start_captured_at={$last30Days}&end_captured_at={$tomorrow}&limit=1000";
         $response = $client->get($url, [
-            'headers' => ['Authorization' => 'Bearer ' . getAccessToken()]
+            'headers' => ['Authorization' => 'Bearer ' . $accessToken]
         ]);
 
         $body = $response->getBody();

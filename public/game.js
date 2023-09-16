@@ -1,10 +1,10 @@
+let gameOver = false;
+let mapIndex = score = roundScore = 0;
+let mapillaryImageLocation, guessMarker, viewer;
+
 window.onload = function () {
-    let gameOver = false;
-    let timer = 10000;
-    let mapIndex, score, roundScore = 0;
-    let mapillaryImageLocation, guessMarker;
     let {Viewer} = mapillary;
-    let viewer = new Viewer({
+    viewer = new Viewer({
         accessToken: accessToken,
         container: 'mapillary-container',
         component: {

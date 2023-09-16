@@ -1,9 +1,9 @@
 <?php
-require 'controllers/auth.php';
-require 'controllers/mapillary.php';
+require_once '../controllers/auth.php';
+require_once '../controllers/mapillary.php';
 
 $accessToken = getAccessToken();
-$selectedPlaces = getRandomPlaces();
+$selectedPlaces = getRandomPlaces($accessToken);
 ?>
 
 <!DOCTYPE html>
@@ -24,8 +24,8 @@ $selectedPlaces = getRandomPlaces();
 <script src="https://unpkg.com/mapillary-js@4.1.0/dist/mapillary.js"></script>
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
-    let selectedPlaces = <?=$selectedPlaces?>;
-    let accessToken = <?=$accessToken?>;
+    let selectedPlaces = JSON.parse('<?=$selectedPlaces?>');
+    let accessToken = '<?=$accessToken?>';
 </script>
 <script src="game.js"></script>
 </body>
