@@ -1,6 +1,13 @@
-<?php require 'mapillary.php'?>
+<?php
+require 'controllers/auth.php';
+require 'controllers/mapillary.php';
+
+$accessToken = getAccessToken();
+$selectedPlaces = getRandomPlaces();
+?>
+
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
 <head>
     <title>Mapillary GeoGuessr</title>
     <link rel="stylesheet" href="https://unpkg.com/mapillary-js@4.1.0/dist/mapillary.css"/>
