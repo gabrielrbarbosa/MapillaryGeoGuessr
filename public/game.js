@@ -1,6 +1,6 @@
 let gameOver = false;
 let mapIndex = score = roundScore = 0;
-let mapillaryImageLocation, guessMarker, viewer;
+let mapillaryImageLocation, guessMarker, viewer, roundResultMap, guessMap, roundResultModal, gameOverModal;
 
 window.onload = function () {
     let {Viewer} = mapillary;
@@ -8,15 +8,19 @@ window.onload = function () {
         accessToken: accessToken,
         container: 'mapillary-container',
         component: {
-            cover: false
-        }
+            cover: false,
+            bearing: false,
+            direction: true,
+            sequence: true,
+            zoom: false,
+        },
     });
 
     // Initialize Mapillary JS on first random place
     moveToNextImage();
 
     // Guess Map
-    const guessMap = L.map('guess-map').setView([0, -50], 2);
+    guessMap = L.map('guess-map').setView([0, -50], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(guessMap);
     guessMap.on('click', function (e) {
         const clickedCoords = e.latlng;
@@ -30,12 +34,78 @@ window.onload = function () {
 
 function moveToNextImage() {
     if (mapIndex < selectedPlaces.length) {
+        if (guessMarker) {
+            guessMap.removeLayer(guessMarker);
+        }
         viewer.moveTo(selectedPlaces[mapIndex]['id']);
         mapillaryImageLocation = [selectedPlaces[mapIndex]['geometry']['coordinates'][1], selectedPlaces[mapIndex]['geometry']['coordinates'][0]];
     } else {
         gameOver = true;
-        alert('Game Over! Score: ' + score);
+        document.getElementById('finalScore').textContent = score;
+
+        if (!gameOverModal) {
+            let gameOverModal = new bootstrap.Modal(document.getElementById('gameOverModal'));
+        }
+        gameOverModal.show();
     }
+}
+
+function showRoundResultModal(guessLat, guessLng, imageLat, imageLng, roundScore, distance) {
+    // Create or reset the map inside the modal
+    if (!roundResultMap) {
+        roundResultMap = L.map('roundResultMap').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(roundResultMap);
+    } else {
+        // If the map already exists, reset its view and clear its layers
+        roundResultMap.setView([0, 0], 2);
+        roundResultMap.eachLayer(function (layer) {
+            roundResultMap.removeLayer(layer);
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(roundResultMap);
+    }
+
+    const greenIcon = L.icon({
+        iconUrl: 'marker-green.png',
+        iconSize: [25, 41],
+        iconAnchor: [12.5, 41],
+    });
+
+    // Mark the correct and guessed locations
+    L.marker([imageLat, imageLng], {icon: greenIcon}).addTo(roundResultMap);
+    L.marker([guessLat, guessLng]).addTo(roundResultMap);
+
+    // Draw a line between the correct and guessed locations
+    const latlngs = [
+        [guessLat, guessLng],
+        [imageLat, imageLng]
+    ];
+    L.polyline(latlngs, {color: getColor(distance), dashArray: '10, 10'}).addTo(roundResultMap);
+
+    // Adjust map view to show both markers and the line
+    const group = new L.featureGroup([L.marker([imageLat, imageLng]), L.marker([guessLat, guessLng]), L.polyline(latlngs)]);
+    const centerLat = (guessLat + imageLat) / 2;
+    const centerLng = (guessLng + imageLng) / 2;
+    roundResultMap.setView([centerLat, centerLng], 2);
+
+    document.getElementById('roundScoreValue').textContent = roundScore;
+    document.getElementById('totalScore').textContent = score;
+    document.getElementById('distanceValue').textContent = distance.toFixed(2);
+
+    // Show the modal
+    if (!roundResultModal) {
+        roundResultModal = new bootstrap.Modal(document.getElementById('roundResultModal'));
+    }
+    roundResultModal.show();
+
+    // Wait for the modal to be shown, then resize the map to fit the modal
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 200);
+}
+
+function getColor(distance) {
+    const maxDistance = 100; // You can adjust this value based on your preferences
+    const percent = Math.min(distance / maxDistance, 1); // Ensure it's between 0 and 1
+    const hue = ((1 - percent) * 120).toString(10); // 0 to 120 (green to red)
+    return `hsl(${hue}, 100%, 50%)`; // Convert to HSL color format
 }
 
 // Function to calculate and display distance
@@ -46,13 +116,11 @@ function calculateDistance() {
         const imageLat = mapillaryImageLocation[0];
         const imageLng = mapillaryImageLocation[1];
         const distance = calculateHaversineDistance(guessLat, guessLng, imageLat, imageLng);
-        document.getElementById('distance-display').innerHTML = `Distance: ${distance.toFixed(2)} km`;
 
         roundScore = calculateRoundScore(distance);
-        alert(`Distance: ${distance.toFixed(2)} km Score: ${roundScore}`);
         score += roundScore;
         mapIndex++;
-        moveToNextImage();
+        showRoundResultModal(guessLat, guessLng, imageLat, imageLng, roundScore, distance);
     }
 }
 
